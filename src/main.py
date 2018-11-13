@@ -19,12 +19,12 @@ logging.basicConfig(
 class Server(object):
     def __init__(self):
         with open("config.json") as fd:
-            self._config: dict = json.loads(fd.read())
+            self._config = json.loads(fd.read())
 
-        self._client: aiohttp.ClientSession = None
-        self._cache: dict = {}
+        self._client = None
+        self._cache = {}
 
-        self._app: web.Application = web.Application()
+        self._app = web.Application()
         self._app.on_startup.append(self.on_startup)
         self._app.add_routes([web.post("/", self.index)])
 
