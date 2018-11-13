@@ -1,0 +1,7 @@
+uvloop
+aioredis
+hiredis
+aiohttp
+aiodns
+cChardet
+nsfw
