@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t chebyrash/nachos-censor .
+docker build -t chebyrash/yablach-censor .

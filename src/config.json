@@ -1,16 +1,13 @@
 {
   "server": {
     "host": "0.0.0.0",
-    "port": 5000
+    "port": 80
   },
   "nsfw": {
-    "threshold": 0.65
+    "threshold": 0.60
   },
   "redis": {
-    "database": "db",
     "host": "0.0.0.0",
-    "port": 5432,
-    "user": "postgres",
-    "password": "test"
+    "port": 5432
   }
 }
