@@ -3,6 +3,9 @@
     "host": "0.0.0.0",
     "port": 5000
   },
+  "nsfw": {
+    "threshold": 0.65
+  },
   "redis": {
     "database": "db",
     "host": "0.0.0.0",

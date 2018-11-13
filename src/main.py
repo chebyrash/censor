@@ -1,13 +1,13 @@
 import asyncio
-import uvloop
 import json
 import logging
-import aiohttp
-import PIL.Image as Image
-
-from nsfw import classify
-from aiohttp import web
 from io import BytesIO
+
+import PIL.Image as Image
+import aiohttp
+import uvloop
+from aiohttp import web
+from nsfw import classify
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -19,14 +19,12 @@ logging.basicConfig(
 class Server(object):
     def __init__(self):
         with open("config.json") as fd:
-            self._config = json.loads(fd.read())
+            self._config: dict = json.loads(fd.read())
 
-        self._client = None
-        self._redis = None
+        self._client: aiohttp.ClientSession = None
+        self._cache: dict = {}
 
-        self._cache = {}
-
-        self._app = web.Application()
+        self._app: web.Application = web.Application()
         self._app.on_startup.append(self.on_startup)
         self._app.add_routes([web.post("/", self.index)])
 
@@ -54,7 +52,7 @@ class Server(object):
 
         image = body.get("image", None)
         if not image:
-            return web.Response(text=json.dumps({"error": "Missing image"}), status=400)
+            return web.Response(text=json.dumps({"error": "Missing Image"}), status=400)
 
         if image in self._cache:
             body["censor"] = self._cache[image]
@@ -62,10 +60,10 @@ class Server(object):
             try:
                 async with self._client.get(url=image) as response:
                     file = BytesIO(await response.read())
-                _, nsfw = classify(Image.open(file))
-                body["censor"] = self._cache[image] = True if nsfw > 0.65 else False
+                score = classify(Image.open(file))[1]
+                body["censor"] = self._cache[image] = True if score > self._config["nsfw"]["threshold"] else False
             except Exception:
-                return web.Response(text=json.dumps({"error": "Corrupt image"}), status=400)
+                return web.Response(text=json.dumps({"error": "Corrupt Image"}), status=400)
 
         return web.Response(text=json.dumps(body))
 
