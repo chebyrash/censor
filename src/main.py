@@ -1,4 +1,5 @@
 import asyncio
+import concurrent.futures
 import json
 import logging
 from io import BytesIO
@@ -14,6 +15,12 @@ asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(lineno)d %(message)s")
+
+pool = concurrent.futures.ProcessPoolExecutor()
+
+
+def is_censored(file: BytesIO, threshold: float):
+    return True if classify(Image.open(file))[1] > threshold else False
 
 
 class Server(object):
@@ -60,8 +67,17 @@ class Server(object):
             try:
                 async with self._client.get(url=image) as response:
                     file = BytesIO(await response.read())
-                score = classify(Image.open(file))[1]
-                body["censor"] = self._cache[image] = True if score > self._config["nsfw"]["threshold"] else False
+            except Exception:
+                return web.Response(text=json.dumps({"error": "Image Download Failed"}), status=400)
+
+            try:
+                censor = await asyncio.get_event_loop().run_in_executor(
+                    pool,
+                    is_censored,
+                    file,
+                    self._config["nsfw"]["threshold"]
+                )
+                body["censor"] = self._cache[image] = censor
             except Exception:
                 return web.Response(text=json.dumps({"error": "Corrupt Image"}), status=400)
 
