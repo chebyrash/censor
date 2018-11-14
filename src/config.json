@@ -3,11 +3,11 @@
     "host": "0.0.0.0",
     "port": 80
   },
+  "cache": {
+    "max_size": 10000,
+    "TTL": 172800
+  },
   "nsfw": {
     "threshold": 0.60
-  },
-  "redis": {
-    "host": "0.0.0.0",
-    "port": 5432
   }
 }
