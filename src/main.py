@@ -29,12 +29,11 @@ class Server(object):
         with open("config.json") as fd:
             self._config = json.loads(fd.read())
 
-        self._cache = cachetools.ttl.TTLCache(
-            maxsize=self._config["cache"]["max_size"],
-            ttl=self._config["cache"]["TTL"]
-        )
+        self._client = None
+        self._cache = None
 
         self._app = web.Application()
+        self._app.on_startup.append(self.on_startup)
         self._app.add_routes([web.post("/", self.index)])
 
     @staticmethod
@@ -48,6 +47,22 @@ class Server(object):
             self._app,
             host=self._config["server"]["host"],
             port=self._config["server"]["port"],
+        )
+
+    async def on_startup(self):
+        self._client = aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(
+                verify_ssl=False,
+                enable_cleanup_closed=True
+            ),
+            connector_owner=False,
+            timeout=aiohttp.ClientTimeout(total=10),
+            skip_auto_headers=True
+        )
+
+        self._cache = cachetools.ttl.TTLCache(
+            maxsize=self._config["cache"]["max_size"],
+            ttl=self._config["cache"]["TTL"]
         )
 
     async def index(self, request: web.Request) -> web.Response:
@@ -65,9 +80,8 @@ class Server(object):
 
         else:
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url=image) as response:
-                        file = BytesIO(await response.read())
+                async with self._client.get(url=image) as response:
+                    file = BytesIO(await response.read())
 
             except:
                 return web.Response(text=json.dumps({"error": "Image Download Failed"}), status=400)
