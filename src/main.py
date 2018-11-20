@@ -29,14 +29,12 @@ class Server(object):
         with open("config.json") as fd:
             self._config = json.loads(fd.read())
 
-        self._client = None
         self._cache = cachetools.ttl.TTLCache(
             maxsize=self._config["cache"]["max_size"],
             ttl=self._config["cache"]["TTL"]
         )
 
         self._app = web.Application()
-        self._app.on_startup.append(self.on_startup)
         self._app.add_routes([web.post("/", self.index)])
 
     @staticmethod
@@ -52,9 +50,6 @@ class Server(object):
             port=self._config["server"]["port"],
         )
 
-    async def on_startup(self, app):
-        self._client = aiohttp.ClientSession()
-
     async def index(self, request: web.Request) -> web.Response:
         try:
             body = await request.json()
@@ -67,10 +62,13 @@ class Server(object):
 
         if image in self._cache:
             body["censor"] = self._cache[image]
+
         else:
             try:
-                async with self._client.get(url=image) as response:
-                    file = BytesIO(await response.read())
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url=image) as response:
+                        file = BytesIO(await response.read())
+
             except:
                 return web.Response(text=json.dumps({"error": "Image Download Failed"}), status=400)
 
@@ -82,6 +80,7 @@ class Server(object):
                     self._config["nsfw"]["threshold"]
                 )
                 body["censor"] = self._cache[image] = censor
+
             except:
                 return web.Response(text=json.dumps({"error": "Corrupt Image"}), status=400)
 

@@ -1,8 +1,6 @@
 uvloop
-aioredis
-hiredis
 aiohttp
 aiodns
 cChardet
-nsfw
 cachetools
+nsfw
