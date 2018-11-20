@@ -7,7 +7,7 @@
   ```json
   {
     "..." : "...",
-    "image": "https://2ch.hk/X/src/XXX/XXX.jpg|png",
+    "image": "https://2ch.hk/X/src/XXX/XXX.png",
     "..." : "..."
   }
   ```
@@ -16,8 +16,8 @@
   ```json
   {
     "..." : "...",
-    "image": "https://2ch.hk/X/src/XXX/XXX.jpg|png",
-    "censor": true | false,
+    "image": "https://2ch.hk/X/src/XXX/XXX.png",
+    "censor": true,
     "..." : "..."
   }
   ```
