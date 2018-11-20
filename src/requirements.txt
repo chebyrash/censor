@@ -3,4 +3,3 @@ aiohttp
 aiodns
 cChardet
 cachetools
-nsfw

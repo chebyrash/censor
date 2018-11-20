@@ -3,8 +3,15 @@ FROM debian:stretch-slim
 COPY src/* /
 
 RUN apt-get update \
-    && apt-get install caffe-cpu python3 python3-pip python3-dev python3-setuptools wget -y --no-install-recommends \
-    && pip3 install wheel \
+    && apt-get install -y --no-install-recommends \
+    build-essential \
+    caffe-cpu \
+    python3 \
+    python3-dev \
+    python3-numpy \
+    python3-pip \
+    python3-setuptools \
+    python3-wheel \
     && pip3 install -r requirements.txt \
     && rm -rf /var/lib/apt/lists/*
 

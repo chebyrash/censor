@@ -2,26 +2,31 @@ import asyncio
 import concurrent.futures
 import json
 import logging
-from io import BytesIO
 
-import PIL.Image as Image
 import aiohttp
 import cachetools
 import uvloop
 from aiohttp import web
-from nsfw import classify
+from nsfw import caffe_preprocess_and_compute, load_model
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-
+pool = concurrent.futures.ProcessPoolExecutor()
+net, transformer = load_model()
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s %(lineno)d %(message)s")
+    format="%(asctime)s %(lineno)d %(message)s"
+)
 
-pool = concurrent.futures.ProcessPoolExecutor()
 
+def is_censored(file: bytes, threshold: float) -> bool:
+    score = caffe_preprocess_and_compute(
+        file,
+        caffe_transformer=transformer,
+        caffe_net=net,
+        output_layers=["prob"]
+    )[1]
 
-def is_censored(file: BytesIO, threshold: float) -> bool:
-    return True if classify(Image.open(file))[1] > threshold else False
+    return True if score > threshold else False
 
 
 class Server(object):
@@ -49,17 +54,15 @@ class Server(object):
             port=self._config["server"]["port"],
         )
 
-    async def on_startup(self):
+    async def on_startup(self, app):
         self._client = aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(
                 verify_ssl=False,
                 enable_cleanup_closed=True
             ),
             connector_owner=False,
-            timeout=aiohttp.ClientTimeout(total=10),
-            skip_auto_headers=True
+            timeout=aiohttp.ClientTimeout(total=10)
         )
-
         self._cache = cachetools.ttl.TTLCache(
             maxsize=self._config["cache"]["max_size"],
             ttl=self._config["cache"]["TTL"]
@@ -81,7 +84,7 @@ class Server(object):
         else:
             try:
                 async with self._client.get(url=image) as response:
-                    file = BytesIO(await response.read())
+                    file = await response.read()
 
             except:
                 return web.Response(text=json.dumps({"error": "Image Download Failed"}), status=400)
