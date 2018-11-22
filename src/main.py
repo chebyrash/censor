@@ -63,9 +63,8 @@ class Server(object):
             connector_owner=False,
             timeout=aiohttp.ClientTimeout(total=10)
         )
-        self._cache = cachetools.ttl.TTLCache(
-            maxsize=self._config["cache"]["max_size"],
-            ttl=self._config["cache"]["TTL"]
+        self._cache = cachetools.LRUCache(
+            maxsize=self._config["cache"]["max_size"]
         )
 
     async def index(self, request: web.Request) -> web.Response:

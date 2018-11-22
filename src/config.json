@@ -4,8 +4,7 @@
     "port": 80
   },
   "cache": {
-    "max_size": 10000,
-    "TTL": 172800
+    "max_size": 20000
   },
   "nsfw": {
     "threshold": 0.60
