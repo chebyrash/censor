@@ -8,7 +8,12 @@
   {
     "..." : "...",
     "image": "https://2ch.hk/X/src/XXX/XXX.png",
-    "..." : "..."
+    "headers" : {
+      "...": "..."
+    },
+    "cookies" : {
+      "usercode_auth": "..."
+    }
   }
   ```
 
@@ -17,7 +22,12 @@
   {
     "..." : "...",
     "image": "https://2ch.hk/X/src/XXX/XXX.png",
-    "censor": true,
-    "..." : "..."
+    "headers" : {
+      "...": "..."
+    },
+    "cookies" : {
+      "usercode_auth": "..."
+    },
+    "censor": true
   }
   ```
