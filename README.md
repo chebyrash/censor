@@ -7,13 +7,9 @@
   ```json
   {
     "..." : "...",
-    "image": "https://2ch.hk/X/src/XXX/XXX.png",
-    "headers" : {
-      "...": "..."
-    },
-    "cookies" : {
-      "usercode_auth": "..."
-    }
+    "image": "url",
+    "headers" : {},
+    "cookies" : {}
   }
   ```
 
@@ -21,13 +17,9 @@
   ```json
   {
     "..." : "...",
-    "image": "https://2ch.hk/X/src/XXX/XXX.png",
-    "headers" : {
-      "...": "..."
-    },
-    "cookies" : {
-      "usercode_auth": "..."
-    },
+    "image": "url",
+    "headers" : {},
+    "cookies" : {},
     "censor": true
   }
   ```
