@@ -12,6 +12,9 @@ RUN apt-get update \
     python3-pip \
     python3-setuptools \
     python3-wheel \
+    ffmpeg \
+    libmagic-dev \
+    file \
     && pip3 install -r requirements.txt \
     && rm -rf /var/lib/apt/lists/*
 

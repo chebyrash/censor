@@ -2,9 +2,11 @@ import asyncio
 import concurrent.futures
 import json
 import logging
+import subprocess
 
 import aiohttp
 import cachetools
+import magic
 import uvloop
 from aiohttp import web
 from nsfw import caffe_preprocess_and_compute, load_model
@@ -25,7 +27,26 @@ def compute(file: bytes, threshold: float) -> bool:
         caffe_net=net,
         output_layers=["prob"]
     )[1]
-    return True if score > threshold else False
+    return True if score >= threshold else False
+
+
+def get_frames(file: bytes) -> list:
+    process = subprocess.Popen(
+        ["ffmpeg",
+         "-loglevel", "panic",
+         "-i", "pipe:",
+         "-vf", "fps=1/3",
+         "-f", "image2pipe",
+         "-vcodec", "mjpeg",
+         "pipe:"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
+    )
+
+    frames = process.communicate(input=file)[0].split(b"\xff\xd9")
+
+    return [x + b"\xff\xd9" for x in frames[:len(frames) - 1]]
 
 
 class Server(object):
@@ -57,7 +78,8 @@ class Server(object):
             maxsize=self._config["cache"]["max_size"]
         )
 
-    async def get_image(self, image: str, headers: dict, cookies: dict) -> bytes:
+    @staticmethod
+    async def get_file(url: str, headers: dict, cookies: dict) -> bytes:
         async with aiohttp.ClientSession(
                 connector=aiohttp.TCPConnector(
                     ssl=False,
@@ -68,8 +90,29 @@ class Server(object):
                 timeout=aiohttp.ClientTimeout(total=10),
                 raise_for_status=True
         ) as session:
-            async with session.get(url=image, headers=headers) as response:
+            async with session.get(url=url, headers=headers) as response:
                 return await response.read()
+
+    @staticmethod
+    def get_file_type(file: bytes) -> str:
+        return magic.from_buffer(buffer=file, mime=True).split("/")[1]
+
+    @staticmethod
+    def verify_file_type_support(file_type: str) -> str:
+        return {
+            "webm": "video",
+            "mp4": "video",
+            "png": "image",
+            "jpeg": "image"
+        }.get(file_type, None)
+
+    @staticmethod
+    async def get_video_frames(file: bytes) -> list:
+        return await asyncio.get_event_loop().run_in_executor(
+            pool,
+            get_frames,
+            file
+        )
 
     async def is_censored(self, file: bytes) -> bool:
         return await asyncio.get_event_loop().run_in_executor(
@@ -85,27 +128,56 @@ class Server(object):
         except json.JSONDecodeError:
             return web.json_response({"error": "Bad JSON"}, status=400)
 
+        url = body.get("url", None)
+        # Backwards compatibility support, REMOVE when client migrates
         image = body.get("image", None)
-        if not image:
-            return web.json_response({"error": "Missing Image"}, status=400)
+        url = url if url else image
 
-        if image in self._cache:
-            body["censor"] = self._cache[image]
+        if not url:
+            return web.json_response({"error": "Missing URL"}, status=400)
 
-        else:
+        if url in self._cache:
+            body["censor"] = self._cache[url]
+            return web.json_response(body)
+
+        try:
+            self._log(url)
+            file = await self.get_file(
+                url=url,
+                headers=body.get("headers", {}),
+                cookies=body.get("cookies", {})
+            )
+        except Exception as e:
+            self._log(e)
+            return web.json_response({"error": "Image Download Failed"}, status=400)
+
+        file_type = self.get_file_type(file)
+        file_type = self.verify_file_type_support(file_type)
+        if not file_type:
+            return web.json_response({"error": "File Format Not Supported"}, status=400)
+
+        if file_type == "image":
             try:
-                file = await self.get_image(image, body.get("headers", {}), body.get("cookies", {}))
-
-            except Exception as e:
-                self._log(e)
-                return web.json_response({"error": "Image Download Failed"}, status=400)
-
-            try:
-                body["censor"] = self._cache[image] = await self.is_censored(file)
-
+                body["censor"] = self._cache[url] = await self.is_censored(file)
             except Exception as e:
                 self._log(e)
                 return web.json_response({"error": "Corrupt Image"}, status=400)
+
+        elif file_type == "video":
+            frames = await self.get_video_frames(file)
+
+            censor = True
+            for frame in frames:
+                try:
+                    censor = await self.is_censored(frame)
+                except Exception as e:
+                    self._log(e)
+                    return web.json_response({"error": "Corrupt Video"}, status=400)
+
+                if censor:
+                    break
+
+            body["censor"] = self._cache[url] = censor
 
         return web.json_response(body)
 

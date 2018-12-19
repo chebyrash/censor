@@ -7,7 +7,7 @@
   ```json
   {
     "..." : "...",
-    "image": "url",
+    "url": "string",
     "headers" : {},
     "cookies" : {}
   }
@@ -17,7 +17,7 @@
   ```json
   {
     "..." : "...",
-    "image": "url",
+    "url": "string",
     "headers" : {},
     "cookies" : {},
     "censor": true

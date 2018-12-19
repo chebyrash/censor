@@ -3,3 +3,4 @@ aiohttp
 aiodns
 cChardet
 cachetools
+python-magic
