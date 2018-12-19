@@ -35,7 +35,7 @@ def get_frames(file: bytes) -> list:
         ["ffmpeg",
          "-loglevel", "panic",
          "-i", "pipe:",
-         "-vf", "fps=1/3",
+         "-vf", "fps=1/4",
          "-f", "image2pipe",
          "-vcodec", "mjpeg",
          "pipe:"],
@@ -141,7 +141,6 @@ class Server(object):
             return web.json_response(body)
 
         try:
-            self._log(url)
             file = await self.get_file(
                 url=url,
                 headers=body.get("headers", {}),
