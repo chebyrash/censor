@@ -33,7 +33,7 @@ def compute(file: bytes, threshold: float) -> bool:
 
 
 def get_frames(file: bytes) -> list:
-    temp = tempfile.NamedTemporaryFile(delete=False)
+    temp = tempfile.NamedTemporaryFile(delete=True)
     temp.write(file)
 
     process = subprocess.Popen(
@@ -66,10 +66,9 @@ def get_frames(file: bytes) -> list:
         stdout=subprocess.PIPE
     )
 
-    temp.delete = True
-    temp.close()
-
     frames = process.communicate()[0].split(b"\xff\xd9")
+
+    temp.close()
 
     return [x + b"\xff\xd9" for x in frames[:len(frames) - 1]]
 
@@ -112,7 +111,7 @@ class Server(object):
                 ),
                 connector_owner=True,
                 cookies=cookies,
-                timeout=aiohttp.ClientTimeout(total=20),
+                timeout=aiohttp.ClientTimeout(total=30),
                 raise_for_status=True
         ) as session:
             async with session.get(url=url, headers=headers) as response:
@@ -189,20 +188,20 @@ class Server(object):
                 return web.json_response({"error": "Corrupt Image"}, status=400)
 
         elif file_type == "video":
-            frames = await self.get_video_frames(file)
+            try:
+                frames = await self.get_video_frames(file)
 
-            censor = True
-            for frame in frames:
-                try:
+                censor = False
+                for frame in frames:
                     censor = await self.is_censored(frame)
-                except Exception as e:
-                    self._log(e)
-                    return web.json_response({"error": "Corrupt Video"}, status=400)
+                    if censor:
+                        break
 
-                if censor:
-                    break
+                body["censor"] = self._cache[url] = censor
 
-            body["censor"] = self._cache[url] = censor
+            except Exception as e:
+                self._log(e)
+                return web.json_response({"error": "Corrupt Video"}, status=400)
 
         return web.json_response(body)
 
