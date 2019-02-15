@@ -124,9 +124,9 @@ class Server(object):
     @staticmethod
     def verify_file_type_support(file_type: str) -> str:
         return {
-            "webm": "video",
-            "mp4": "video",
-            "gif": "video",
+            # "webm": "video",
+            # "mp4": "video",
+            # "gif": "video",
             "png": "image",
             "jpeg": "image"
         }.get(file_type, None)
@@ -154,10 +154,6 @@ class Server(object):
             return web.json_response({"error": "Bad JSON"}, status=400)
 
         url = body.get("url", None)
-        # Backwards compatibility support, REMOVE when client migrates
-        image = body.get("image", None)
-        url = url if url else image
-
         if not url:
             return web.json_response({"error": "Missing URL"}, status=400)
 
