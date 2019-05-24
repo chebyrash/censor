@@ -178,7 +178,10 @@ class Server(object):
 
         if file_type == "image":
             try:
-                body["censor"] = self._cache[url] = await self.is_censored(file)
+                is_censored = await self.is_censored(file)
+                self._log(body)
+                self._log(is_censored)
+                body["censor"] = self._cache[url] = is_censored
             except Exception as e:
                 self._log(e)
                 return web.json_response({"error": "Corrupt Image"}, status=400)

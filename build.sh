@@ -1,4 +1,4 @@
 #!/bin/bash
 
-docker rmi chebyrash/yablach-censor
-docker build -t chebyrash/yablach-censor .
+docker rmi chebyrash/channy-censor
+docker build -t chebyrash/channy-censor .
