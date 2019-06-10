@@ -124,9 +124,9 @@ class Server(object):
     @staticmethod
     def verify_file_type_support(file_type: str) -> str:
         return {
-            # "webm": "video",
-            # "mp4": "video",
-            # "gif": "video",
+            "webm": "video",
+            "mp4": "video",
+            "gif": "video",
             "png": "image",
             "jpeg": "image"
         }.get(file_type, None)
