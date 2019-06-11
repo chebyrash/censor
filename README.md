@@ -1,8 +1,3 @@
-# API
-
-## Method
-    POST https://censor.yablach.co/
-    
 ## Supported Media Formats
 
 Name | Type
@@ -16,7 +11,6 @@ GIF | Video
 ## Example Request
   ```json
   {
-    "..." : "...",
     "url": "string",
     "headers" : {},
     "cookies" : {}
@@ -26,7 +20,6 @@ GIF | Video
 ## Example Response
   ```json
   {
-    "..." : "...",
     "url": "string",
     "headers" : {},
     "cookies" : {},
