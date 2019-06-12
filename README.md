@@ -1,3 +1,5 @@
+## POST censor.channy.io
+
 ## Supported Media Formats
 
 Name | Type
@@ -11,9 +13,7 @@ GIF | Video
 ## Example Request
   ```json
   {
-    "url": "string",
-    "headers" : {},
-    "cookies" : {}
+    "url": "string"
   }
   ```
 
@@ -21,8 +21,6 @@ GIF | Video
   ```json
   {
     "url": "string",
-    "headers" : {},
-    "cookies" : {},
     "censor": true
   }
   ```

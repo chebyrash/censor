@@ -103,7 +103,7 @@ class Server(object):
         )
 
     @staticmethod
-    async def get_file(url: str, headers: dict, cookies: dict) -> bytes:
+    async def get_file(url: str, cookies: dict) -> bytes:
         async with aiohttp.ClientSession(
                 connector=aiohttp.TCPConnector(
                     ssl=False,
@@ -111,10 +111,10 @@ class Server(object):
                 ),
                 connector_owner=True,
                 cookies=cookies,
-                timeout=aiohttp.ClientTimeout(total=30),
+                timeout=aiohttp.ClientTimeout(total=15),
                 raise_for_status=True
         ) as session:
-            async with session.get(url=url, headers=headers) as response:
+            async with session.get(url=url) as response:
                 return await response.read()
 
     @staticmethod
@@ -164,8 +164,7 @@ class Server(object):
         try:
             file = await self.get_file(
                 url=url,
-                headers=body.get("headers", {}),
-                cookies=body.get("cookies", {})
+                cookies=dict(request.cookies)
             )
         except Exception as e:
             self._log(e)
@@ -179,8 +178,6 @@ class Server(object):
         if file_type == "image":
             try:
                 is_censored = await self.is_censored(file)
-                self._log(body)
-                self._log(is_censored)
                 body["censor"] = self._cache[url] = is_censored
             except Exception as e:
                 self._log(e)
