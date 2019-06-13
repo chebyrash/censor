@@ -29,6 +29,7 @@ def compute(file: bytes, threshold: float) -> bool:
         caffe_net=net,
         output_layers=["prob"]
     )[1]
+    # print(score)
     return True if score >= threshold else False
 
 
