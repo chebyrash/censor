@@ -5,12 +5,14 @@ import logging
 import re
 import subprocess
 import tempfile
+from urllib.parse import urlparse
 
 import aiohttp
 import cachetools
 import magic
 import uvloop
 from aiohttp import web
+
 from nsfw import caffe_preprocess_and_compute, load_model
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -29,7 +31,6 @@ def compute(file: bytes, threshold: float) -> bool:
         caffe_net=net,
         output_layers=["prob"]
     )[1]
-    # print(score)
     return True if score >= threshold else False
 
 
@@ -133,6 +134,19 @@ class Server(object):
         }.get(file_type, None)
 
     @staticmethod
+    def verify_hostname(hostname: str) -> bool:
+        return hostname in [
+            "2ch.hk",
+
+            "4chan.org",
+            "boards.4chan.org",
+            "i.4cdn.org",
+
+            "8ch.net",
+            "media.8ch.net"
+        ]
+
+    @staticmethod
     async def get_video_frames(file: bytes) -> list:
         return await asyncio.get_event_loop().run_in_executor(
             pool,
@@ -161,6 +175,10 @@ class Server(object):
         if url in self._cache:
             body["censor"] = self._cache[url]
             return web.json_response(body)
+
+        is_allowed = self.verify_hostname(urlparse(url).netloc)
+        if not is_allowed:
+            return web.json_response({"error": "Blacklisted resource"}, status=400)
 
         try:
             file = await self.get_file(
