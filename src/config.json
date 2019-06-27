@@ -7,6 +7,6 @@
     "max_size": 15000
   },
   "nsfw": {
-    "threshold": 0.20
+    "threshold": 0.25
   }
 }
