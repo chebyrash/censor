@@ -143,7 +143,11 @@ class Server(object):
             "i.4cdn.org",
 
             "8ch.net",
-            "media.8ch.net"
+            "media.8ch.net",
+
+            "kohlchan.net",
+
+            "i.ylilauta.org"
         ]
 
     @staticmethod
