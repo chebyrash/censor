@@ -147,23 +147,6 @@ class Server(object):
         }.get(file_type, None)
 
     @staticmethod
-    def verify_hostname(hostname: str) -> bool:
-        return hostname in [
-            "2ch.hk",
-
-            "4chan.org",
-            "boards.4chan.org",
-            "i.4cdn.org",
-
-            "8ch.net",
-            "media.8ch.net",
-
-            "kohlchan.net",
-
-            "i.ylilauta.org"
-        ]
-
-    @staticmethod
     async def get_video_frames(file: bytes) -> list:
         return await asyncio.get_event_loop().run_in_executor(
             pool,
@@ -192,10 +175,6 @@ class Server(object):
         if url in self._cache:
             body["censor"] = self._cache[url]
             return web.json_response(body)
-
-        is_allowed = self.verify_hostname(urlparse(url).netloc)
-        if not is_allowed:
-            return web.json_response({"error": "Blacklisted resource"}, status=400)
 
         try:
             file = await self.get_file(
