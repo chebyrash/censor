@@ -1,5 +1,3 @@
-## POST censor.channy.io
-
 ## Supported Media Formats
 
 Name | Type
