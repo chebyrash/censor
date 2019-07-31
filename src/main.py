@@ -103,19 +103,6 @@ class Server(object):
         self._cache = cachetools.LRUCache(
             maxsize=self._config["cache"]["max_size"]
         )
-        asyncio.get_event_loop().create_task(self.update_config())
-
-    async def update_config(self):
-        while True:
-            try:
-                response = await self.get_file("https://config.channy.io/", {})
-                parsed = json.loads(response.decode("utf-8"))
-                self._config["nsfw"]["threshold"] = parsed["censor_threshold"]
-                self._log("Updated config")
-                self._log(self._config)
-            except:
-                self._log("Failed to update config")
-            await asyncio.sleep(60)
 
     @staticmethod
     async def get_file(url: str, cookies: dict) -> bytes:
